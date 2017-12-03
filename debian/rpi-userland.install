@@ -1,0 +1,4 @@
+00-vmcs.conf etc/ld.so.conf.d
+901-videocore.sh etc/profile.d
+firmware/hardfp/opt/vc/bin opt/vc
+firmware/hardfp/opt/vc/lib opt/vc

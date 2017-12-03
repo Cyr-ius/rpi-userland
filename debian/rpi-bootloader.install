@@ -1,0 +1,7 @@
+firmware/boot/bootcode.bin boot
+firmware/boot/fixup.dat boot
+firmware/boot/fixup_cd.dat boot
+firmware/boot/fixup_x.dat boot
+firmware/boot/start.elf boot
+firmware/boot/start_cd.elf boot
+firmware/boot/start_x.elf boot

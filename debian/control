@@ -1,0 +1,26 @@
+Source: rpi-userland
+Section: libs
+Priority: required
+Maintainer: Cyr-ius <cyr-ius@ipocus.net>
+Build-Depends: debhelper (>= 8.0.0)
+Homepage: https://github.com/cyr-ius/rpi23-gen-image
+
+Package: rpi-userland
+Architecture: any
+Depends: ${misc:Depends}
+Description: Raspberry Pi userland package
+
+Package: rpi-userland-dev
+Architecture: any
+Description: Raspberry Pi userland package with headers
+Depends: ${misc:Depends}, rpi-userland (=0)
+
+Package: rpi-userland-src
+Architecture: any
+Description: Raspberry Pi userland package with headers
+Depends: ${misc:Depends}, rpi-userland (=0)
+
+Package: rpi-bootloader
+Architecture: any
+Depends: ${misc:Depends}
+Description: Raspberry Pi Bootloader components

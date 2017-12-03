@@ -1,0 +1,7 @@
+#!/bin/sh -e
+
+version="$1"
+if [ -f "/boot/config.txt" ]; then
+  sed -i "/initramfs/c\initramfs initrd.img-${version} followkernel" /boot/config.txt 
+fi
+echo $version > /boot/kernel.release

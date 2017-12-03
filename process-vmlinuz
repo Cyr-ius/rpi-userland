@@ -1,0 +1,21 @@
+#!/bin/sh
+
+processimage()
+{
+    name=$(basename $(ls /boot/kernel*.img))
+    cp -f /boot/vmlinuz-${1} /boot/$name
+
+    rm -rf /boot/*.dtb /boot/overlays/
+    cp -af /usr/lib/linux-image-${1}/* /boot/
+
+    EXIT=$?
+    if [ $EXIT -ne 0 ]; then
+	echo "Failed to copy device tree overlays." >&2
+        exit $EXIT
+    fi
+
+    rm -rf /lib/modules/${1}_kernel_*
+    rm -rf /usr/lib/linux-image-${1}
+}
+
+processimage $1 $2
