@@ -1,6 +1,0 @@
-rpi-userland (1.0) stretch; urgency=medium
-
-  * Create userland for Raspberry Pi
-
- -- Cyr-ius <cyr-ius@ipocus.net>  Sat, 16 Jul 2017 17:20:01 +0000
-
