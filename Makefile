@@ -5,12 +5,12 @@ URL_FIRMWARE=https://github.com/raspberrypi/firmware
 FIRMWARE_BRANCH=next
 EMAIL=cyr-ius@ipocus.net
 DEBFULLNAME=Cyr-ius Thozz
-KDEB_CHANGELOG_DIST=stretch
+KDEB_CHANGELOG_DIST?=stretch
 
 NUMCPUS=$(shell grep -c '^processor' /proc/cpuinfo)
-RPI_MODEL?=2
 
-ifeq ($(RPI_MODEL),1)
+ifeq ($(RPI_MODEL),rbp1)
+	MODEL=1
 	ARCH=arm
 	KERNEL_BIN_IMAGE=zImage
 	KERNEL_DEFCONFIG=bcmrpi_defconfig
@@ -18,7 +18,8 @@ ifeq ($(RPI_MODEL),1)
 	CROSS_COMPILE=arm-linux-gnueabihf
 endif
 
-ifeq ($(RPI_MODEL),2)
+ifeq ($(RPI_MODEL),rbp2)
+	MODEL=2
 	ARCH=arm
 	KERNEL_BIN_IMAGE=zImage
 	KERNEL_DEFCONFIG=bcm2709_defconfig
@@ -26,34 +27,28 @@ ifeq ($(RPI_MODEL),2)
 	CROSS_COMPILE=arm-linux-gnueabihf
 endif
 
-ifeq ($(RPI_MODEL),3)
+ifeq ($(RPI_MODEL),rbp3)
+	MODEL=3
 	ARCH=arm64
 	KERNEL_BIN_IMAGE=Image
 	KERNEL_DEFCONFIG=bcmrpi3_defconfig
 	KBUILD_DEBARCH=arm64
-	CROSS_COMPILE=arch64-linux-gnu
+	CROSS_COMPILE=aarch64-linux-gnu
 endif
 
-export KBUILD_DEBARCH , KDEB_CHANGELOG_DIST , RPI_MODEL , DEBFULLNAME , EMAIL
+export KBUILD_DEBARCH , KDEB_CHANGELOG_DIST , RPI_MODEL , DEBFULLNAME , EMAIL , MODEL
 
 all:.make-linux
 
-rbp1:
-	RPI_MODEL=1 $(MAKE) package
-
-rbp2:
-	RPI_MODEL=2 $(MAKE) package
-
-rbp3:
-	RPI_MODEL=3 $(MAKE) package
+rbp%:
+	RPI_MODEL=$@ $(MAKE) package
 
 .prep-files:.prep-linux
+	rm -f debian/control debian/changelog
 	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
-	sed "s/rpi[1|2|3]-/rpi-/" -i debian/control
-	rename s/rpi-/rpi$(RPI_MODEL)-/ debian/rpi-*
-	sed s/rpi-/rpi$(RPI_MODEL)-/ -i debian/control
-	rm -f debian/changelog
-	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "rpi$(RPI_MODEL)-userland" "Create userland for Raspberry Pi $(RPI_MODEL)" --newversion $(KERNEL_VERSION)
+	rename s/rpi-/rpi$(MODEL)-/ debian/rpi-*
+	sed s/#MODEL#/$(MODEL)/ debian/control.in > debian/control
+	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "rpi$(MODEL)-userland" "Create userland for Raspberry Pi $(MODEL)" --newversion $(shell make -C linux/ kernelversion | grep -v "make")
 
 .prep-firmware:
 	@if  [ ! -d firmware ];then \
@@ -76,26 +71,24 @@ rbp3:
 		git -C linux clean -xfdd;\
 		git -C linux checkout -q -- *;\
 		echo "Update linux repository...";\
-		git -C linux pull;\
+		git -C linux pull; \
 	fi
-	$(eval KERNEL_VERSION=$(shell make -C linux/ kernelversion | grep -v "make"))
 
 .make-linux:.prep-linux
-	- make -C "linux" ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" mrproper
-	- make -C "linux" ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_DEFCONFIG)
-	- make -j$(NUMCPUS) deb-pkg -C "linux" ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) modules dtbs
+	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" mrproper
+	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_DEFCONFIG)
+	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) modules dtbs
+	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) bindeb-pkg
+	mv linux-* ..
 
 package:.prep-files
 	dpkg-buildpackage -us -uc -B -a$(KBUILD_DEBARCH)
-	mv linux-* ..
+	rm -f debian/control debian/changelog
 	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
-	sed "s/rpi[1|2|3]-/rpi-/" -i debian/control
-	rm -f debian/changelog
 
 reset:
 	debclean
+	rm -f debian/control debian/changelog
 	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
-	sed "s/rpi[1|2|3]-/rpi-/" -i debian/control
-	rm -f debian/changelog
 	rm -rf linux firmware
 
