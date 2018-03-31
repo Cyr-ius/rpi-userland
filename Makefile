@@ -2,7 +2,7 @@
 URL_KERNEL=https://github.com/raspberrypi/linux
 KERNEL_BRANCH=rpi-4.14.y
 URL_FIRMWARE=https://github.com/raspberrypi/firmware
-FIRMWARE_BRANCH=next
+FIRMWARE_BRANCH=master
 EMAIL=cyr-ius@ipocus.net
 DEBFULLNAME=Cyr-ius Thozz
 KDEB_CHANGELOG_DIST?=stretch
@@ -48,7 +48,7 @@ rbp%:
 	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
 	rename s/rpi-/rpi$(MODEL)-/ debian/rpi-*
 	sed s/#MODEL#/$(MODEL)/ debian/control.in > debian/control
-	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "rpi$(MODEL)-userland" "Create userland for Raspberry Pi $(MODEL)" --newversion $(shell make -C linux/ kernelversion | grep -v "make")
+	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "rpi$(MODEL)-userland" "Create userland for Raspberry Pi $(MODEL)" --newversion $(shell make -s -C linux kernelversion)
 
 .prep-firmware:
 	@if  [ ! -d firmware ];then \
@@ -78,7 +78,7 @@ rbp%:
 	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" mrproper
 	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_DEFCONFIG)
 	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) modules dtbs
-	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) bindeb-pkg
+	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" bindeb-pkg
 	mv linux-* ..
 
 package:.prep-files
