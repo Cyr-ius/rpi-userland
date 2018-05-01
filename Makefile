@@ -59,7 +59,7 @@ rbp%:
 		git -C firmware clean -xfdd; \
 		git -C firmware checkout -q -- *; \
 		echo "Update firmware repository...";\
-		git -C firmware pull; \
+		git -C firmware pull --depth=1; \
 	fi
 	
 .prep-linux:.prep-firmware
@@ -71,7 +71,7 @@ rbp%:
 		git -C linux clean -xfdd;\
 		git -C linux checkout -q -- *;\
 		echo "Update linux repository...";\
-		git -C linux pull; \
+		git -C linux pull --depth=1; \
 	fi
 
 .make-linux:.prep-linux
