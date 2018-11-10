@@ -1,31 +1,99 @@
-Source: rpi#MODEL#-userland
-Section: libs
+Source: #MODEL#-userland
+Section: misc
 Priority: required
 Maintainer: Cyr-ius <cyr-ius@ipocus.net>
 Build-Depends: debhelper (>= 8.0.0)
 Homepage: https://github.com/cyr-ius/-gen-image
 
-Package: rpi#MODEL#-userland
+Package: #MODEL#-firmware
 Architecture: any
+Depends: ${misc:Depends} , ${dist:Depends}
+Replaces: #MODEL#-firmware,rpi#REV#-firmware
+Breaks: #MODEL#-firmware,rpi#REV#-firmware
+Description: Metapackage for kernel Raspberry Pi
+
+Package: libraspberrypi0
+Architecture: armhf
 Depends: ${misc:Depends}
+Replaces: libraspberrypi0
+Breaks: libraspberrypi0
 Description: Raspberry Pi userland package
 
-Package: rpi#MODEL#-userland-dev
-Architecture: any
-Description: Raspberry Pi userland package with headers
-Depends: ${misc:Depends}, ${userland:Depends}
+Package: libraspberrypi0-dev
+Architecture: armhf
+Depends: ${misc:Depends}
+Replaces: libraspberrypi0-dev
+Breaks: libraspberrypi0-dev
+Description: Raspberry Pi userland package
 
-Package: rpi#MODEL#-userland-src
-Architecture: any
-Description: Raspberry Pi userland package with headers
-Depends: ${misc:Depends}, ${userland:Depends}
+Package: libraspberrypi0-src
+Architecture: armhf
+Depends: ${misc:Depends}
+Replaces: libraspberrypi0-src
+Breaks: libraspberrypi0-src
+Description: Raspberry Pi userland package
 
-Package: rpi#MODEL#-bootloader
+Package: raspberrypi-bootloader-nokernel
 Architecture: any
 Depends: ${misc:Depends}
-Description: Raspberry Pi Bootloader components
+Replaces: raspberrypi-bootloader-nokernel
+Breaks: raspberrypi-bootloader-nokernel
+Description: Raspberry Pi bootloader components
 
-Package: rpi#MODEL#-firmware
+Package: rpi#REV#-firmware
 Architecture: any
-Description: Metapackage for kernel Raspberry Pi
-Depends: ${misc:Depends} , ${dist:Depends}
+Depends: rbpi#REV#-firmware
+Description: Transitionnal package for kernel Raspberry Pi
+  This is a transitional package. It can safely be removed.
+
+Package: #MODEL#-userland
+Depends: libraspberrypi0, ${misc:Depends}
+Architecture: any
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.
+  
+Package: rpi#REV#-userland
+Depends: libraspberrypi0, ${misc:Depends}
+Architecture: any
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.
+  
+Package: #MODEL#-userland-dev
+Depends: libraspberrypi0-dev, ${misc:Depends}
+Architecture: any
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.
+
+Package: #MODEL#-userland-src
+Depends: libraspberrypi0-src, ${misc:Depends}
+Architecture: any
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.
+  
+Package: #MODEL#-bootloader
+Depends: raspberrypi-bootloader-nokernel, ${misc:Depends}
+Architecture: any
+Replaces:rpi#REV#-bootloader
+Breaks:rpi#REV#-bootloader
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.
+
+Package: rpi#REV#-bootloader
+Depends: raspberrypi-bootloader-nokernel, ${misc:Depends}
+Architecture: any
+Replaces:rpi#REV#-bootloader
+Breaks:rpi#REV#-bootloader
+Priority: optional
+Section: oldlibs
+Description: transitional package
+  This is a transitional package. It can safely be removed.

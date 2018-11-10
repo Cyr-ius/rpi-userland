@@ -13,6 +13,10 @@ if [ "$1" = "install" -o "$1" = "upgrade" ]; then
 
 	# install all diverts needed by this version of the package:
 	# install_divert PATH_DIV PATH_ORIG
+	dpkg-divert --package rbpi1-userland --remove /etc/kernel-img.conf >/dev/null 2>&1
+	dpkg-divert --package rpi1-userland --remove /etc/kernel-img.conf >/dev/null 2>&1
+	dpkg-divert --package rbpi2-userland --remove /etc/kernel-img.conf >/dev/null 2>&1
+	dpkg-divert --package rpi2-userland --remove /etc/kernel-img.conf >/dev/null 2>&1
         if [ ! -f /tcver.* ]
         then
             install_divert /etc/kernel-img.conf.distributed /etc/kernel-img.conf

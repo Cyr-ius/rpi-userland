@@ -12,7 +12,9 @@ if [ -z "$DPKG_MAINTSCRIPT_PACKAGE" ]; then exit 1; fi
 if [ "$1" = "remove" ]; then
 
 	# remove all diverts that this version _and_ all prior versions of the package once added:
-	# remove_divert PATH_DIV PATH_ORIG
-
 	remove_divert /etc/kernel-img.conf.distributed /etc/kernel-img.conf
 fi
+
+
+chmod +x /etc/profile.d/901-videocore.sh
+ldconfig

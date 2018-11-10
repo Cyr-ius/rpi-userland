@@ -8,13 +8,12 @@
 
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
-SUBSTVARS=-Vuserland:Depends="rpi$(MODEL)-userland (=$(KERNEL_VERSION))" -Vdist:Depends="rpi$(MODEL)-bootloader (=$(KERNEL_VERSION)), rpi$(MODEL)-userland (=$(KERNEL_VERSION)), linux-image-$(RELEASE) (=$(VERSION)), linux-libc-dev (>=$(VERSION))"
+SUBSTVARS=-Vdist:Depends="$(MODEL)-bootloader (=$(USERLAND_VERSION)), libraspberrypi0 (=$(USERLAND_VERSION)), linux-image-$(RELEASE) (=$(RELEASE)-1), linux-libc-dev (>=$(RELEASE)-1)"
 %:
 	dh $@
 override_dh_shlibdeps:
 override_dh_gencontrol:
-	$(eval RELEASE=$(shell cat "linux/include/config/kernel.release"))
-	$(eval REVISION=$(shell cat linux/.version))
-	$(eval VERSION=$(RELEASE)-$(REVISION))
-	$(eval KERNEL_VERSION=$(shell make -C linux/ kernelversion | grep -v "make"))
+	$(eval RELEASE=$(shell cat linux/kernelrelease))
+	$(eval VERSION=$(shell cat linux/kernelversion))
+	$(eval REVISION=$(RELEASE)-$(VERSION))
 	dh_gencontrol -- $(SUBSTVARS)

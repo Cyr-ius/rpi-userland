@@ -1,94 +1,61 @@
+include ../depends/Makefile.include
+DEPS=../depends/Makefile.include Makefile
+
 # lib name, version
 URL_KERNEL=https://github.com/raspberrypi/linux
 KERNEL_BRANCH=rpi-4.14.y
-URL_FIRMWARE=https://github.com/raspberrypi/firmware
-FIRMWARE_BRANCH=master
 EMAIL=cyr-ius@ipocus.net
 DEBFULLNAME=Cyr-ius Thozz
 KDEB_CHANGELOG_DIST?=stretch
+REV=$(shell echo "$(MODEL)" | grep -o [0-9])
+EPOCH=
+VERSION=$(shell make -s -C "$(CURDIR)/linux" kernelversion | grep -iv make)
+SUB_VERSION=
+USERLAND_VERSION=$(EPOCH)$(VERSION)$(SUB_VERSION)
 
-NUMCPUS=$(shell grep -c '^processor' /proc/cpuinfo)
+export KBUILD_DEBARCH , KDEB_CHANGELOG_DIST , MODEL , DEBFULLNAME , EMAIL , MODEL, USERLAND_VERSION
 
-ifeq ($(RPI_MODEL),rbp1)
-	MODEL=1
-	ARCH=arm
-	KERNEL_BIN_IMAGE=zImage
-	KERNEL_DEFCONFIG=bcmrpi_defconfig
-	KBUILD_DEBARCH=armhf
-	CROSS_COMPILE=arm-linux-gnueabihf
-endif
+LIBDYLIB=kernel
 
-ifeq ($(RPI_MODEL),rbp2)
-	MODEL=2
-	ARCH=arm
-	KERNEL_BIN_IMAGE=zImage
-	KERNEL_DEFCONFIG=bcm2709_defconfig
-	KBUILD_DEBARCH=armhf
-	CROSS_COMPILE=arm-linux-gnueabihf
-endif
+all: $(LIBDYLIB)
 
-ifeq ($(RPI_MODEL),rbp3)
-	MODEL=3
-	ARCH=arm64
-	KERNEL_BIN_IMAGE=Image
-	KERNEL_DEFCONFIG=bcmrpi3_defconfig
-	KBUILD_DEBARCH=arm64
-	CROSS_COMPILE=aarch64-linux-gnu
-endif
+rbpi1 rbpi2 rbpi3 linux64:
+	MODEL=$@ $(MAKE) package
 
-export KBUILD_DEBARCH , KDEB_CHANGELOG_DIST , RPI_MODEL , DEBFULLNAME , EMAIL , MODEL
-
-all:.make-linux
-
-rbp%:
-	RPI_MODEL=$@ $(MAKE) package
-
-.prep-files:.prep-linux
+.prep-files:prep-linux
+	rename "s/rbpi-/$(MODEL)-/g" debian/rbpi-*
 	rm -f debian/control debian/changelog
-	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
-	rename s/rpi-/rpi$(MODEL)-/ debian/rpi-*
-	sed s/#MODEL#/$(MODEL)/ debian/control.in > debian/control
-	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "rpi$(MODEL)-userland" "Create userland for Raspberry Pi $(MODEL)" --newversion $(shell make -s -C linux kernelversion)
+	sed "s/#MODEL#/$(MODEL)/g" debian/control.in > debian/control
+	sed "s/#REV#/$(REV)/g" -i debian/control
+	dch --create --distribution $(KDEB_CHANGELOG_DIST) --package "$(MODEL)-userland" "Create userland for Raspberry Pi ($(MODEL))" --newversion $(USERLAND_VERSION)
+	rm -rf $(CURDIR)/firmware
+	cp -r $(DEPENDS_PATH)/firmware $(CURDIR)
 
-.prep-firmware:
-	@if  [ ! -d firmware ];then \
-		echo "Load firmware...";\
-		git clone $(URL_FIRMWARE) --depth=1 -b $(FIRMWARE_BRANCH); \
-	else \
-		echo "Clean firmware repository...";\
-		git -C firmware clean -xfdd; \
-		git -C firmware checkout -q -- *; \
-		echo "Update firmware repository...";\
-		git -C firmware pull --depth=1; \
-	fi
-	
-.prep-linux:.prep-firmware
-	@if  [ ! -d linux ];then \
-		echo "Load linux kernel...";\
-		git clone $(URL_KERNEL) --depth=1 -b $(KERNEL_BRANCH); \
-	else \
-		echo "Clean linux repository...";\
-		git -C linux clean -xfdd;\
-		git -C linux checkout -q -- *;\
-		echo "Update linux repository...";\
-		git -C linux pull --depth=1; \
-	fi
+prep-linux:
+	echo "Load linux kernel...";\
+	rm -rf linux
+	git clone $(URL_KERNEL) --depth=1 -b $(KERNEL_BRANCH); \
 
-.make-linux:.prep-linux
-	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" mrproper
-	- make -C linux ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_DEFCONFIG)
-	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" $(KERNEL_BIN_IMAGE) modules dtbs
-	- make -C linux -j$(NUMCPUS) ARCH="$(ARCH)" CROSS_COMPILE="$(CROSS_COMPILE)-" bindeb-pkg
-	mv linux-* ..
+
+config: $(DEPS)
+	$(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" $(KERNEL_DEFCONFIG)
+	$(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" $(KERNEL_DEFCONFIG) kernelversion | grep [0-9]\.[0-9].* > linux/kernelversion
+	$(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" $(KERNEL_DEFCONFIG) kernelrelease | grep [0-9]\.[0-9].* > linux/kernelrelease
+
+$(LIBDYLIB): config
+	- $(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" $(KERNEL_BIN_IMAGE) modules dtbs
+	- $(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" bindeb-pkg
 
 package:.prep-files
-	dpkg-buildpackage -us -uc -B -a$(KBUILD_DEBARCH)
-	rm -f debian/control debian/changelog
-	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
+	dpkg-buildpackage -us -uc -B -a$(ARCH)
+	- mv linux-* ..
+	rename "s/rbpi[1|2|3]-/rbpi-/g" debian/rbpi*-*
+
+clean:
+	- $(MAKE) -C linux ARCH="$(KERNEL_ARCH)" CROSS_COMPILE="$(HOST)-" mrproper
 
 reset:
 	debclean
-	rm -f debian/control debian/changelog
-	rename "s/rpi[1|2|3]-/rpi-/" debian/rpi*-*
-	rm -rf linux firmware
+	rename "s/rbpi[1|2|3]-/rbpi-/g" debian/rbpi*-*
+	rm -rf debian/control debian/changelog linux firmware
 

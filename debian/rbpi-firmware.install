@@ -1,4 +1,4 @@
 files/preprocess-vmlinuz /etc/kernel/preinst.d
 files/process-vmlinuz /etc/kernel/postinst.d
 files/update-config /etc/kernel/postinst.d
-files/update-notifier /etc/kernel/postinst.d
+files/restart-notifier /etc/kernel/postinst.d
